@@ -6,24 +6,30 @@ const path = require('path');
 
 const initDatabase = async () => {
   let connection;
+  const databaseName = process.env.DB_NAME || 'tigre_burger_pos';
+  const adminUsername = process.env.BOOTSTRAP_ADMIN_USER || 'admin';
+  const adminPassword = process.env.BOOTSTRAP_ADMIN_PASSWORD || 'admin123';
 
   try {
     connection = await mysql.createConnection({
       host: process.env.DB_HOST,
       port: process.env.DB_PORT,
       user: process.env.DB_USER,
-      password: process.env.DB_PASSWORD
+      password: process.env.DB_PASSWORD,
+      ssl: process.env.DB_SSL === 'true'
+        ? { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+        : undefined
     });
 
     console.log('Conectado al servidor MySQL');
 
     // Create database
     await connection.query(`
-      CREATE DATABASE IF NOT EXISTS tigre_burger_pos
+      CREATE DATABASE IF NOT EXISTS \`${databaseName}\`
       CHARACTER SET utf8mb4
       COLLATE utf8mb4_unicode_ci
     `);
-    await connection.query('USE tigre_burger_pos');
+    await connection.query(`USE \`${databaseName}\``);
     console.log('Base de datos verificada/creada');
 
     // Create tables one by one (avoid SQL comment issues)
@@ -53,6 +59,7 @@ const initDatabase = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(100) NOT NULL,
         description VARCHAR(255),
+        icon VARCHAR(50) DEFAULT NULL,
         status ENUM('activo', 'inactivo') DEFAULT 'activo',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -63,6 +70,7 @@ const initDatabase = async () => {
         id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(150) NOT NULL,
         description TEXT,
+        image_url VARCHAR(500) DEFAULT NULL,
         category_id INT NOT NULL,
         price DECIMAL(10,2) NOT NULL,
         status ENUM('activo', 'inactivo') DEFAULT 'activo',
@@ -111,14 +119,14 @@ const initDatabase = async () => {
 
       `CREATE TABLE IF NOT EXISTS ventas (
         id INT AUTO_INCREMENT PRIMARY KEY,
-        caja_id INT NOT NULL,
+        caja_id INT DEFAULT NULL,
         mesa_id INT DEFAULT NULL,
         user_id INT NOT NULL,
-        payment_method_id INT NOT NULL,
+        payment_method_id INT DEFAULT NULL,
         sale_type ENUM('mesa', 'llevar') NOT NULL,
         subtotal DECIMAL(10,2) NOT NULL DEFAULT 0.00,
         total DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-        status ENUM('activa', 'cerrada', 'cancelada') DEFAULT 'activa',
+        status ENUM('activa', 'cerrada', 'cancelada', 'reservada') DEFAULT 'activa',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         FOREIGN KEY (caja_id) REFERENCES cajas(id) ON DELETE RESTRICT,
@@ -131,6 +139,17 @@ const initDatabase = async () => {
         INDEX idx_ventas_type (sale_type),
         INDEX idx_ventas_status (status),
         INDEX idx_ventas_created (created_at)
+      ) ENGINE=InnoDB`,
+
+      `CREATE TABLE IF NOT EXISTS venta_pagos (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        sale_id INT NOT NULL,
+        payment_method_id INT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (sale_id) REFERENCES ventas(id) ON DELETE CASCADE,
+        FOREIGN KEY (payment_method_id) REFERENCES metodos_pago(id) ON DELETE RESTRICT,
+        INDEX idx_venta_pagos_sale (sale_id)
       ) ENGINE=InnoDB`,
 
       `CREATE TABLE IF NOT EXISTS detalle_ventas (
@@ -176,14 +195,14 @@ const initDatabase = async () => {
     console.log('Datos iniciales insertados');
 
     // Create users with hashed passwords
-    const hashedAdmin = await bcrypt.hash('admin123', 10);
+    const hashedAdmin = await bcrypt.hash(adminPassword, 10);
     const [adminRole] = await connection.query("SELECT id FROM roles WHERE name = 'admin'");
 
     await connection.query(
       `INSERT INTO usuarios (username, password, full_name, role_id, status)
        VALUES (?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE password = VALUES(password)`,
-      ['admin', hashedAdmin, 'Administrador', adminRole[0].id, 'activo']
+       ON DUPLICATE KEY UPDATE username = VALUES(username)`,
+      [adminUsername, hashedAdmin, 'Administrador', adminRole[0].id, 'activo']
     );
 
     const hashedCajero = await bcrypt.hash('cajero123', 10);
@@ -192,13 +211,13 @@ const initDatabase = async () => {
     await connection.query(
       `INSERT INTO usuarios (username, password, full_name, role_id, status)
        VALUES (?, ?, ?, ?, ?)
-       ON DUPLICATE KEY UPDATE password = VALUES(password)`,
+       ON DUPLICATE KEY UPDATE username = VALUES(username)`,
       ['cajero', hashedCajero, 'Cajero Principal', cajeroRole[0].id, 'activo']
     );
 
     console.log('Usuarios creados:');
-    console.log('  Admin  -> admin / admin123');
-    console.log('  Cajero -> cajero / cajero123');
+    console.log(`  Admin  -> ${adminUsername}`);
+    console.log('  Cajero -> cajero');
 
     console.log('\nBase de datos inicializada correctamente');
     process.exit(0);
