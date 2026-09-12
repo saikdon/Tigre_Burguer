@@ -1,0 +1,28 @@
+# Dependencies and builds
+node_modules/
+**/node_modules/
+frontend/dist/
+
+# Secrets
+.env
+**/.env
+!.env.example
+!**/.env.example
+*.pem
+*.key
+
+# WhatsApp credentials and temporary media
+backend/whatsapp-session/
+backend/uploads/whatsapp/
+
+# Logs and editor/system files
+*.log
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+.chat/
+
+# Local-only database exports containing operational data
+database/tigre_burger_pos_dump.sql
+database/tigre_burger_pos_tidb.sql
