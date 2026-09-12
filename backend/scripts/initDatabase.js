@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
 const fs = require('fs');
 const path = require('path');
+const defaultMenu = require('../data/defaultMenu');
 
 const initDatabase = async () => {
   let connection;
@@ -73,6 +74,7 @@ const initDatabase = async () => {
         image_url VARCHAR(500) DEFAULT NULL,
         category_id INT NOT NULL,
         price DECIMAL(10,2) NOT NULL,
+        is_top_selling TINYINT(1) NOT NULL DEFAULT 0,
         status ENUM('activo', 'inactivo') DEFAULT 'activo',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -171,6 +173,9 @@ const initDatabase = async () => {
     for (const tableSQL of tables) {
       await connection.query(tableSQL);
     }
+    await connection.query(
+      'ALTER TABLE productos ADD COLUMN IF NOT EXISTS is_top_selling TINYINT(1) NOT NULL DEFAULT 0 AFTER price'
+    );
     console.log('Tablas creadas/verificadas');
 
     // Insert default data
@@ -190,6 +195,23 @@ const initDatabase = async () => {
       await connection.query(
         'INSERT IGNORE INTO mesas (number, status) VALUES (?, ?)',
         [i, 'libre']
+      );
+    }
+
+    for (const category of defaultMenu.categories) {
+      await connection.query(
+        `INSERT IGNORE INTO categorias (id, name, description, status)
+         VALUES (?, ?, ?, 'activo')`,
+        category
+      );
+    }
+
+    for (const product of defaultMenu.products) {
+      await connection.query(
+        `INSERT IGNORE INTO productos
+         (id, name, description, image_url, category_id, price, is_top_selling, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, 'activo')`,
+        product
       );
     }
     console.log('Datos iniciales insertados');
