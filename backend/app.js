@@ -12,7 +12,6 @@ const cashRegisterRoutes = require('./routes/cashRegisterRoutes');
 const saleRoutes = require('./routes/saleRoutes');
 const dashboardRoutes = require('./routes/dashboardRoutes');
 const reportRoutes = require('./routes/reportRoutes');
-const whatsappRoutes = require('./whatsapp/whatsappRoutes');
 
 const path = require('path');
 
@@ -36,7 +35,6 @@ app.use('/api/cash-register', cashRegisterRoutes);
 app.use('/api/sales', saleRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/reports', reportRoutes);
-app.use('/api/whatsapp', whatsappRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', message: 'Tiger Burger POS API funcionando' });

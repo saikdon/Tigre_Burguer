@@ -1,6 +1,5 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
-import { WhatsAppProvider } from './context/WhatsAppContext';
 import Layout from './components/layout/Layout';
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
@@ -12,7 +11,7 @@ import MesaOrder from './pages/MesaOrder';
 import CashRegister from './pages/CashRegister';
 import Reports from './pages/Reports';
 import Reservations from './pages/Reservations';
-import WhatsApp from './pages/WhatsApp';
+import Users from './pages/Users';
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useAuth();
@@ -50,6 +49,11 @@ const PublicRoute = ({ children }) => {
   return children;
 };
 
+const AdminRoute = ({ children }) => {
+  const { isAdmin } = useAuth();
+  return isAdmin ? children : <Navigate to="/" replace />;
+};
+
 const AppRoutes = () => {
   return (
     <Routes>
@@ -79,7 +83,7 @@ const AppRoutes = () => {
         <Route path="caja" element={<CashRegister />} />
         <Route path="reportes" element={<Reports />} />
         <Route path="reservas" element={<Reservations />} />
-        <Route path="whatsapp" element={<WhatsApp />} />
+        <Route path="usuarios" element={<AdminRoute><Users /></AdminRoute>} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
@@ -91,9 +95,7 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <WhatsAppProvider>
-          <AppRoutes />
-        </WhatsAppProvider>
+        <AppRoutes />
       </AuthProvider>
     </Router>
   );

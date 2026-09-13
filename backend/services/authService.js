@@ -62,8 +62,24 @@ class AuthService {
   }
 
   async updateUser(id, userData) {
+    const current = await userRepository.findById(id);
+    if (!current) throw Object.assign(new Error('Usuario no encontrado'), { status: 404 });
+    if (userData.username && userData.username !== current.username) {
+      const duplicate = await userRepository.findByUsername(userData.username);
+      if (duplicate) throw Object.assign(new Error('El nombre de usuario ya existe'), { status: 409 });
+    }
+    const roles = await userRepository.findRoles();
+    const nextRole = roles.find((role) => role.id === Number(userData.role_id))?.name || current.role_name;
+    const nextStatus = userData.status || current.status;
+    if (current.role_name === 'admin' && (nextRole !== 'admin' || nextStatus !== 'activo')) {
+      if (await userRepository.countActiveAdmins(id) === 0) {
+        throw Object.assign(new Error('Debe permanecer al menos un administrador activo'), { status: 409 });
+      }
+    }
     if (userData.password) {
       userData.password = await bcrypt.hash(userData.password, 10);
+    } else {
+      delete userData.password;
     }
     return userRepository.update(id, userData);
   }
@@ -71,6 +87,8 @@ class AuthService {
   async getAllUsers() {
     return userRepository.findAll();
   }
+
+  async getRoles() { return userRepository.findRoles(); }
 
   async deleteUser(id) {
     return userRepository.delete(id);

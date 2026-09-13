@@ -28,6 +28,10 @@ exports.getAllUsers = async (req, res, next) => {
   }
 };
 
+exports.getRoles = async (req, res, next) => {
+  try { res.json(await authService.getRoles()); } catch (error) { next(error); }
+};
+
 exports.createUser = async (req, res, next) => {
   try {
     const id = await authService.createUser(req.body);
@@ -39,6 +43,9 @@ exports.createUser = async (req, res, next) => {
 
 exports.updateUser = async (req, res, next) => {
   try {
+    if (Number(req.params.id) === Number(req.user.id) && req.body.status === 'inactivo') {
+      return res.status(409).json({ message: 'No puedes desactivar tu propio usuario' });
+    }
     await authService.updateUser(req.params.id, req.body);
     res.json({ message: 'Usuario actualizado correctamente' });
   } catch (error) {

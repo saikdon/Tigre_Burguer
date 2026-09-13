@@ -1,11 +1,9 @@
 import { NavLink } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useWhatsApp } from '../../context/WhatsAppContext';
 import { TigreLogo, ClawMarks } from '../TigreBranding';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { user, isAdmin, logout } = useAuth();
-  const { unreadPedidos } = useWhatsApp();
 
   const menuItems = [
     { path: '/', label: 'Dashboard', icon: 'bi-grid-1x2-fill' },
@@ -14,12 +12,12 @@ const Sidebar = ({ isOpen, onClose }) => {
     { path: '/caja', label: 'Caja', icon: 'bi-cash-stack' },
     { path: '/reservas', label: 'Reservas', icon: 'bi-bookmark-fill' },
     { path: '/reportes', label: 'Reportes', icon: 'bi-bar-chart-line-fill' },
-    { path: '/whatsapp', label: 'WhatsApp', icon: 'bi-whatsapp' },
   ];
 
   const adminItems = [
     { path: '/productos', label: 'Productos', icon: 'bi-box-seam-fill' },
     { path: '/categorias', label: 'Categorías', icon: 'bi-tags-fill' },
+    { path: '/usuarios', label: 'Usuarios', icon: 'bi-people-fill' },
   ];
 
   const NavItem = ({ item }) => (
@@ -55,31 +53,6 @@ const Sidebar = ({ isOpen, onClose }) => {
                 opacity: isActive ? 1 : 0.7,
               }}
             ></i>
-            {item.path === '/whatsapp' && unreadPedidos > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-6px',
-                  right: '-8px',
-                  backgroundColor: '#E53935',
-                  color: '#fff',
-                  fontSize: '0.6rem',
-                  fontWeight: 700,
-                  borderRadius: '50px',
-                  padding: '1px 5px',
-                  minWidth: '16px',
-                  height: '16px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  lineHeight: 1,
-                  boxShadow: '0 2px 6px rgba(229, 57, 53, 0.4)',
-                  animation: 'pulse 1.5s infinite',
-                }}
-              >
-                {unreadPedidos > 9 ? '9+' : unreadPedidos}
-              </span>
-            )}
           </div>
           {item.label}
           {isActive && (
@@ -112,7 +85,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside
-        className="position-fixed top-0 start-0 h-100 d-flex flex-column"
+        className="position-fixed top-0 start-0 h-100 d-flex flex-column sidebar-shell"
         style={{
           width: '270px',
           backgroundColor: 'var(--bg-sidebar)',
@@ -128,6 +101,7 @@ const Sidebar = ({ isOpen, onClose }) => {
           <ClawMarks style={{ top: '-20px', right: '-10px', width: '80px', height: '100px', opacity: 0.06 }} />
           <TigreLogo size={46} variant="full" />
           <button
+            aria-label="Cerrar menú"
             className="btn p-1"
             onClick={onClose}
             style={{ color: 'var(--text-muted)', fontSize: '1.2rem', lineHeight: 1 }}

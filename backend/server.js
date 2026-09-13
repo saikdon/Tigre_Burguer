@@ -1,17 +1,10 @@
 const http = require('http');
-const { Server } = require('socket.io');
 const app = require('./app');
 const config = require('./config/env');
 const { testConnection } = require('./config/database');
 
 const server = http.createServer(app);
 
-const io = new Server(server, {
-  cors: {
-    origin: process.env.CORS_ORIGIN || '*',
-    methods: ['GET', 'POST']
-  }
-});
 
 process.on('uncaughtException', (err) => {
   console.error('Error no capturado:', err.message);
@@ -28,15 +21,6 @@ const startServer = async () => {
     process.exit(1);
   }
 
-  global.io = io;
-
-  io.on('connection', (socket) => {
-    console.log(`Cliente conectado: ${socket.id}`);
-    socket.on('disconnect', () => {
-      console.log(`Cliente desconectado: ${socket.id}`);
-    });
-  });
-
   server.listen(config.port, config.host, () => {
     console.log('═══════════════════════════════════════════');
     console.log(`  Servidor corriendo en puerto ${config.port}`);
@@ -46,12 +30,6 @@ const startServer = async () => {
     console.log('═══════════════════════════════════════════');
   });
 
-  try {
-    const { initWhatsApp } = require('./whatsapp/baileysClient');
-    await initWhatsApp(io);
-  } catch (err) {
-    console.error('Error iniciando WhatsApp (el servidor sigue funcionando):', err.message);
-  }
 };
 
 startServer();

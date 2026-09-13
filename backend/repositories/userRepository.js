@@ -19,9 +19,22 @@ class UserRepository {
 
   async findAll() {
     const [rows] = await pool.query(
-      'SELECT u.id, u.username, u.full_name, r.name as role_name, u.status, u.created_at FROM usuarios u JOIN roles r ON u.role_id = r.id ORDER BY u.created_at DESC'
+      'SELECT u.id, u.username, u.full_name, u.role_id, r.name as role_name, u.status, u.created_at FROM usuarios u JOIN roles r ON u.role_id = r.id ORDER BY u.created_at DESC'
     );
     return rows;
+  }
+
+  async findRoles() {
+    const [rows] = await pool.query('SELECT id, name, description FROM roles ORDER BY id');
+    return rows;
+  }
+
+  async countActiveAdmins(excludeId = null) {
+    const params = [];
+    let sql = "SELECT COUNT(*) total FROM usuarios u JOIN roles r ON r.id = u.role_id WHERE r.name = 'admin' AND u.status = 'activo'";
+    if (excludeId) { sql += ' AND u.id <> ?'; params.push(excludeId); }
+    const [rows] = await pool.query(sql, params);
+    return Number(rows[0].total);
   }
 
   async create(userData) {
@@ -37,6 +50,7 @@ class UserRepository {
     const values = [];
 
     if (userData.full_name !== undefined) { fields.push('full_name = ?'); values.push(userData.full_name); }
+    if (userData.username !== undefined) { fields.push('username = ?'); values.push(userData.username); }
     if (userData.role_id !== undefined) { fields.push('role_id = ?'); values.push(userData.role_id); }
     if (userData.status !== undefined) { fields.push('status = ?'); values.push(userData.status); }
     if (userData.password !== undefined) { fields.push('password = ?'); values.push(userData.password); }

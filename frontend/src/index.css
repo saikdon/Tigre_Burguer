@@ -520,6 +520,26 @@ body {
   animation: scaleIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+.section-kicker { display:block; color:var(--accent); font-size:.7rem; font-weight:800; letter-spacing:.12em; text-transform:uppercase; margin-bottom:.35rem; }
+.users-page h2 { font-weight:800; letter-spacing:-.04em; }
+.users-summary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.user-stat { display:flex; align-items:center; gap:14px; padding:18px; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); }
+.user-stat-icon { width:44px; height:44px; border-radius:12px; display:grid; place-items:center; font-size:1.2rem; }
+.user-stat-icon.success { background:var(--success-light); color:var(--success); }.user-stat-icon.accent { background:var(--accent-light); color:var(--accent); }.user-stat-icon.warning { background:var(--warning-light); color:var(--warning); }
+.user-stat strong { display:block; font-size:1.6rem; line-height:1; }.user-stat span:last-child { color:var(--text-secondary); font-size:.82rem; }
+.users-panel { overflow:hidden; background:var(--bg-card); border:1px solid var(--border-color); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); }
+.users-toolbar { min-height:72px; display:flex; align-items:center; justify-content:space-between; gap:16px; padding:14px 18px; border-bottom:1px solid var(--border-light); color:var(--text-muted); font-size:.82rem; }
+.search-control { display:flex; align-items:center; gap:10px; width:min(430px,100%); background:var(--bg-input); border:1px solid transparent; border-radius:var(--radius-md); padding:0 14px; }.search-control:focus-within { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-light); background:#fff; }
+.search-control input { width:100%; border:0; outline:0; background:transparent; padding:11px 0; color:var(--text-primary); }
+.users-table thead th { padding:13px 18px; background:#fcfaf8; color:var(--text-muted); font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; border-bottom-color:var(--border-color); }.users-table td { padding:14px 18px; vertical-align:middle; border-bottom-color:var(--border-light); }
+.user-cell { display:flex; align-items:center; gap:12px; }.user-avatar { width:40px; height:40px; flex:none; display:grid; place-items:center; border-radius:12px; color:#fff; background:var(--accent); font-weight:800; }.user-cell strong,.user-cell small { display:block; }.user-cell small { color:var(--text-muted); margin-top:2px; }
+.role-badge { display:inline-block; padding:5px 9px; border-radius:8px; font-size:.76rem; font-weight:700; }.role-badge.admin { color:#9a3412; background:#fff0e6; }.role-badge.cajero { color:#334155; background:#f1f5f9; }
+.status-label { display:inline-flex; align-items:center; gap:7px; font-size:.8rem; font-weight:650; }.status-label i { width:8px; height:8px; border-radius:50%; }.status-label.activo { color:var(--success); }.status-label.activo i { background:var(--success); }.status-label.inactivo { color:var(--text-muted); }.status-label.inactivo i { background:#aaa; }
+.state-message { min-height:220px; display:flex; justify-content:center; align-items:center; gap:12px; color:var(--text-secondary); padding:32px; text-align:left; }.state-message>i { font-size:1.7rem; color:var(--text-muted); }.state-message p { margin:3px 0 0; color:var(--text-muted); }.state-message.error>i { color:var(--danger); }
+.form-label { font-weight:650; color:var(--text-secondary); font-size:.84rem; }.form-text { color:var(--text-muted); }
+.modal { z-index:1060; }.modal-dialog { z-index:1061; }
+.users-modal { background:rgba(31, 22, 16, .46); backdrop-filter:blur(2px); }
+
 @media (max-width: 768px) {
   :root {
     --sidebar-width: 0px;
@@ -532,4 +552,17 @@ body {
   .sidebar-main[data-open="true"] {
     transform: translateX(0);
   }
+  .users-summary { grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+  .user-stat { min-width:0; gap:8px; padding:12px 8px; flex-direction:column; align-items:flex-start; }
+  .user-stat-icon { width:36px; height:36px; border-radius:10px; font-size:1rem; }
+  .user-stat strong { font-size:1.25rem; }
+  .user-stat span:last-child { font-size:.72rem; }
+  .users-toolbar { align-items:stretch; flex-direction:column; }
+  .users-toolbar>span { padding-left:4px; }
+  .users-table thead { display:none; }
+  .users-table,.users-table tbody,.users-table tr,.users-table td { display:block; width:100%; }
+  .users-table tr { padding:14px 16px; border-bottom:1px solid var(--border-light); position:relative; }
+  .users-table td { border:0; padding:5px 0; }
+  .users-table td:last-child { text-align:left!important; padding-top:12px; }
+  main.p-4 { padding:1rem!important; }
 }

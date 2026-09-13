@@ -4,7 +4,7 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 
 const Layout = () => {
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(() => window.innerWidth > 768);
 
   return (
     <div className="d-flex" style={{ position: 'relative', minHeight: '100vh' }}>
@@ -27,7 +27,7 @@ const Layout = () => {
       <div
         className="flex-grow-1"
         style={{
-          marginLeft: sidebarOpen ? 'var(--sidebar-width)' : '0',
+          marginLeft: sidebarOpen && window.innerWidth > 768 ? 'var(--sidebar-width)' : '0',
           transition: 'margin-left 0.3s ease',
           position: 'relative',
           zIndex: 1,

@@ -14,17 +14,6 @@ export default defineConfig({
       '/uploads': {
         target: 'http://localhost:4000',
         changeOrigin: true
-      },
-      '/socket.io': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
-        ws: true,
-        configure: (proxy) => {
-          proxy.on('error', () => {});
-          proxy.on('proxyReqWs', (req) => {
-            req.on('error', () => {});
-          });
-        }
       }
     }
   }
