@@ -12,6 +12,7 @@ import CashRegister from './pages/CashRegister';
 import Reports from './pages/Reports';
 import Reservations from './pages/Reservations';
 import Users from './pages/Users';
+import PublicCatalog from './pages/PublicCatalog';
 
 const ProtectedRoute = ({ children }) => {
   const { token, loading } = useAuth();
@@ -57,6 +58,7 @@ const AdminRoute = ({ children }) => {
 const AppRoutes = () => {
   return (
     <Routes>
+      <Route path="/catalogo" element={<PublicCatalog />} />
       <Route
         path="/login"
         element={

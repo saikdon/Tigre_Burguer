@@ -7,8 +7,8 @@ class SaleRepository {
       await connection.beginTransaction();
 
       const [saleResult] = await connection.query(
-        `INSERT INTO ventas (caja_id, mesa_id, user_id, payment_method_id, sale_type, subtotal, total, status)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+        `INSERT INTO ventas (caja_id, mesa_id, user_id, payment_method_id, sale_type, subtotal, total, status, customer_name, customer_phone, payment_preference, reservation_notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           saleData.caja_id || null,
           saleData.mesa_id || null,
@@ -17,7 +17,11 @@ class SaleRepository {
           saleData.sale_type,
           saleData.subtotal,
           saleData.total,
-          saleData.status || 'cerrada'
+          saleData.status || 'cerrada',
+          saleData.customer_name || null,
+          saleData.customer_phone || null,
+          saleData.payment_preference || null,
+          saleData.reservation_notes || null
         ]
       );
 

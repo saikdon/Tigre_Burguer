@@ -2,6 +2,7 @@ const saleRepository = require('../repositories/saleRepository');
 const cashRegisterRepository = require('../repositories/cashRegisterRepository');
 const tableRepository = require('../repositories/tableRepository');
 const paymentRepository = require('../repositories/paymentRepository');
+const productRepository = require('../repositories/productRepository');
 const { pool } = require('../config/database');
 
 class SaleService {
@@ -199,6 +200,49 @@ class SaleService {
     return saleRepository.findById(saleId);
   }
 
+  async createPublicReservation({ customer_name, customer_phone, payment_preference, notes, items }) {
+    const normalizedItems = new Map();
+    for (const item of items) {
+      const id = Number(item.product_id);
+      normalizedItems.set(id, (normalizedItems.get(id) || 0) + Number(item.quantity));
+    }
+
+    const productIds = [...normalizedItems.keys()];
+    const products = await productRepository.findActiveByIds(productIds);
+    if (products.length !== productIds.length) {
+      throw Object.assign(new Error('Uno o más productos ya no están disponibles'), { status: 400 });
+    }
+
+    const byId = new Map(products.map((product) => [Number(product.id), product]));
+    const lineItems = productIds.map((id) => {
+      const product = byId.get(id);
+      const quantity = normalizedItems.get(id);
+      const unitPrice = Number(product.price);
+      return { product_id: id, quantity, unit_price: unitPrice, subtotal: unitPrice * quantity, notes: null };
+    });
+    const total = lineItems.reduce((sum, item) => sum + item.subtotal, 0);
+    const userId = await this._getPublicReservationUserId();
+    const paymentMethod = await this._getPaymentMethod(payment_preference);
+
+    const saleId = await saleRepository.create({
+      caja_id: null,
+      mesa_id: null,
+      user_id: userId,
+      payment_method_id: paymentMethod.id,
+      sale_type: 'llevar',
+      subtotal: total,
+      total,
+      status: 'reservada',
+      customer_name: customer_name.trim(),
+      customer_phone: customer_phone.replace(/[\s-]/g, ''),
+      payment_preference,
+      reservation_notes: notes?.trim() || null,
+      items: lineItems
+    });
+
+    return saleRepository.findById(saleId);
+  }
+
   async fulfillReservation(saleId, paymentMethodName, payments) {
     const sale = await saleRepository.findById(saleId);
     if (!sale) {
@@ -264,6 +308,29 @@ class SaleService {
       throw Object.assign(new Error('Método de pago no válido'), { status: 400 });
     }
     return rows[0];
+  }
+
+  async _getPublicReservationUserId() {
+    const configuredId = Number(process.env.PUBLIC_RESERVATION_USER_ID);
+    if (configuredId) {
+      const [users] = await pool.query('SELECT id FROM usuarios WHERE id = ? AND status = "activo"', [configuredId]);
+      if (!users.length) throw Object.assign(new Error('El usuario público de reservas no está disponible'), { status: 500 });
+      return users[0].id;
+    }
+
+    const username = process.env.PUBLIC_RESERVATION_USERNAME || 'reservas_publicas';
+    const [existing] = await pool.query('SELECT id FROM usuarios WHERE username = ?', [username]);
+    if (existing.length) return existing[0].id;
+
+    const bcrypt = require('bcryptjs');
+    const [roles] = await pool.query("SELECT id FROM roles WHERE name = 'cajero' LIMIT 1");
+    if (!roles.length) throw Object.assign(new Error('No existe un rol para las reservas públicas'), { status: 500 });
+    const password = await bcrypt.hash(require('crypto').randomBytes(32).toString('hex'), 10);
+    const [created] = await pool.query(
+      'INSERT INTO usuarios (username, password, full_name, role_id, status) VALUES (?, ?, ?, ?, "activo")',
+      [username, password, 'Reservas públicas', roles[0].id]
+    );
+    return created.insertId;
   }
 }
 

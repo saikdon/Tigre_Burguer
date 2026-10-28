@@ -45,6 +45,16 @@ class ProductRepository {
     return rows;
   }
 
+  async findActiveByIds(ids) {
+    if (!ids.length) return [];
+    const [rows] = await pool.query(
+      `SELECT id, name, price, status FROM productos
+       WHERE id IN (?) AND status = 'activo'`,
+      [ids]
+    );
+    return rows;
+  }
+
   async create(data) {
     const [result] = await pool.query(
       'INSERT INTO productos (name, description, image_url, category_id, price, status) VALUES (?, ?, ?, ?, ?, ?)',

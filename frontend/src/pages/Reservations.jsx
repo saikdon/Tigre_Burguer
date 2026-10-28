@@ -104,14 +104,22 @@ const Reservations = () => {
                         <i className="bi bi-bookmark-fill"></i>
                       </div>
                       <div>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>Reserva #{res.id}</div>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text-primary)' }}>{res.customer_name || `Reserva #${res.id}`}</div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                          {new Date(res.created_at).toLocaleString('es-BO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                          #{res.id} · {new Date(res.created_at).toLocaleString('es-BO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
                         </div>
                       </div>
                     </div>
                     <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--warning)' }}>{formatCurrency(res.total)}</span>
                   </div>
+
+                  {(res.customer_phone || res.payment_preference || res.reservation_notes) && (
+                    <div className="mb-3 px-3 py-2" style={{ backgroundColor: 'rgba(255,90,0,.06)', border: '1px solid rgba(255,90,0,.12)', borderRadius: '10px', fontSize: '.82rem' }}>
+                      {res.customer_phone && <div className="d-flex align-items-center gap-2 mb-1" style={{ color: 'var(--text-secondary)' }}><i className="bi bi-telephone" style={{ color: 'var(--accent)' }}></i>{res.customer_phone}</div>}
+                      {res.payment_preference && <div className="d-flex align-items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className={`bi ${res.payment_preference === 'QR' ? 'bi-qr-code' : 'bi-cash'}`} style={{ color: 'var(--accent)' }}></i>Prefiere {res.payment_preference}{res.payment_preference === 'Efectivo' ? ' al recoger' : ' (confirmar al cobrar)'}</div>}
+                      {res.reservation_notes && <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,90,0,.12)', color: 'var(--text-muted)' }}><i className="bi bi-chat-left-text me-1"></i>{res.reservation_notes}</div>}
+                    </div>
+                  )}
 
                   <div style={{ backgroundColor: 'var(--bg-input)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
                     {res.items.map((item, idx) => (
@@ -126,7 +134,7 @@ const Reservations = () => {
                     <button
                       className="btn flex-grow-1 py-2"
                       style={{ backgroundColor: 'var(--success)', color: 'white', fontWeight: 600, borderRadius: '10px', fontSize: '0.9rem' }}
-                      onClick={() => { setSelectedReservation(res); setShowPayModal(true); }}
+                      onClick={() => { setSelectedReservation(res); setPayments([{ payment_method: res.payment_preference || 'Efectivo', amount: Number(res.total) }]); setShowPayModal(true); }}
                     >
                       <i className="bi bi-cash me-1"></i>Cobrar
                     </button>
@@ -162,7 +170,8 @@ const Reservations = () => {
                   <div style={{ color: 'var(--text-muted)' }}>Total a cobrar</div>
                 </div>
 
-                <SplitPayment total={Number(selectedReservation.total)} onPaymentsChange={setPayments} />
+                {selectedReservation.customer_name && <div className="mb-3 text-center" style={{ color: 'var(--text-muted)', fontSize: '.84rem' }}>Cliente: <strong style={{ color: 'var(--text-primary)' }}>{selectedReservation.customer_name}</strong>{selectedReservation.customer_phone ? ` · ${selectedReservation.customer_phone}` : ''}</div>}
+                <SplitPayment total={Number(selectedReservation.total)} onPaymentsChange={setPayments} preferredMethod={selectedReservation.payment_preference || 'Efectivo'} />
               </div>
               <div className="modal-footer" style={{ borderTop: '1px solid var(--border-light)' }}>
                 <button type="button" className="btn btn-outline-secondary" onClick={() => setShowPayModal(false)} style={{ borderRadius: '10px', color: 'var(--text-secondary)', borderColor: 'var(--border-color)' }}>Cancelar</button>

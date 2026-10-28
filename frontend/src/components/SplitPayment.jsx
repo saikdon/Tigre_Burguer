@@ -2,10 +2,14 @@ import { useState, useEffect } from 'react';
 
 const PAYMENT_METHODS = ['Efectivo', 'QR'];
 
-export default function SplitPayment({ total, onPaymentsChange }) {
+export default function SplitPayment({ total, onPaymentsChange, preferredMethod = 'Efectivo' }) {
   const [payments, setPayments] = useState([
-    { method: 'Efectivo', amount: '' }
+    { method: preferredMethod, amount: '' }
   ]);
+
+  useEffect(() => {
+    setPayments([{ method: preferredMethod || 'Efectivo', amount: total > 0 ? total.toFixed(2) : '' }]);
+  }, [preferredMethod, total]);
   const [error, setError] = useState('');
 
   useEffect(() => {
@@ -28,7 +32,7 @@ export default function SplitPayment({ total, onPaymentsChange }) {
           .map(p => ({ payment_method: p.method, amount: parseFloat(p.amount) }))
       );
     }
-  }, [payments]);
+  }, [payments, onPaymentsChange]);
 
   const updatePayment = (index, field, value) => {
     const updated = [...payments];
