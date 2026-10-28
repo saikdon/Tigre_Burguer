@@ -4,6 +4,7 @@ import './PublicCatalog.css';
 
 const money = (value) => `Bs. ${Number(value || 0).toFixed(2)}`;
 const backendOrigin = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+const qrPaymentImage = '/images/tigre-burger-payment-qr.png';
 const imageUrl = (value) => {
   if (!value) return null;
   if (value.startsWith('http')) return value;
@@ -81,7 +82,14 @@ export default function PublicCatalog() {
         <label>Celular<input required value={customer.customer_phone} onChange={(e) => setCustomer({ ...customer, customer_phone: e.target.value })} placeholder="Ej. 71234567" inputMode="tel" /></label>
         <label>¿Cómo querés pagar?</label>
         <div className="payment-options"><button type="button" className={customer.payment_preference === 'Efectivo' ? 'chosen' : ''} onClick={() => setCustomer({ ...customer, payment_preference: 'Efectivo' })}><i className="bi bi-cash-stack"></i><span>Efectivo<small>Pago al recoger</small></span></button><button type="button" className={customer.payment_preference === 'QR' ? 'chosen' : ''} onClick={() => setCustomer({ ...customer, payment_preference: 'QR' })}><i className="bi bi-qr-code"></i><span>QR<small>Se confirma al recoger</small></span></button></div>
-        {customer.payment_preference === 'QR' && <div className="qr-notice"><i className="bi bi-qr-code-scan"></i><span>Solicitá el QR al confirmar tu pedido. El pago se valida cuando recojas.</span></div>}
+        {customer.payment_preference === 'QR' && <section className="qr-payment-panel" aria-label="Código QR para pago" style={{ display: 'grid', gridTemplateColumns: '108px minmax(0, 1fr)', gap: '12px', alignItems: 'center', marginTop: '12px', padding: '12px', background: '#fff4eb', border: '1px solid #f1c9ad', color: '#5c321b' }}>
+          <img src={qrPaymentImage} alt="Código QR de pago de Tigre Burger" style={{ display: 'block', width: '108px', height: '108px', objectFit: 'contain', background: '#fff', border: '1px solid #ead3bf' }} />
+          <div>
+            <strong style={{ display: 'flex', alignItems: 'center', gap: '6px', color: 'var(--ink)' }}><i className="bi bi-qr-code-scan" style={{ color: 'var(--orange)', fontSize: '18px' }}></i> Pago por QR</strong>
+            <p style={{ margin: '6px 0', color: '#6c4936' }}>Escaneá el QR y presentá tu comprobante al recoger.</p>
+            <small style={{ display: 'block', color: '#8a664f' }}>El personal confirmará el pago al momento de la entrega.</small>
+          </div>
+        </section>}
         <label>Nota para tu pedido <em>opcional</em><textarea maxLength="500" value={customer.notes} onChange={(e) => setCustomer({ ...customer, notes: e.target.value })} placeholder="Sin cebolla, por favor" /></label>
         {error && <div className="catalog-error"><i className="bi bi-exclamation-circle"></i>{error}</div>}
         <button disabled={sending || !cart.length} className="catalog-primary" type="submit">{sending ? 'Enviando reserva...' : 'Reservar pedido'}<i className="bi bi-arrow-right"></i></button>
