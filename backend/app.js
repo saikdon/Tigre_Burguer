@@ -17,10 +17,15 @@ const publicRoutes = require('./routes/publicRoutes');
 const path = require('path');
 
 const app = express();
-const corsOrigins = (process.env.CORS_ORIGIN || 'http://localhost:5173')
+const configuredCorsOrigins = process.env.CORS_ORIGIN || 'http://localhost:5173';
+const corsOrigins = [
+  ...configuredCorsOrigins
   .split(',')
   .map((origin) => origin.trim())
-  .filter(Boolean);
+  .filter(Boolean),
+  // The customer catalog is intentionally hosted as a separate Vercel app.
+  ...(process.env.NODE_ENV === 'production' ? ['https://tigre-burguer.vercel.app'] : [])
+];
 
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
