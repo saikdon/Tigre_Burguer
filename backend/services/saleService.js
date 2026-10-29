@@ -352,8 +352,12 @@ function normalizeCustomization(customizations = {}, product) {
   }
 
   const parts = [];
-  if (sauces.length) parts.push(`Aderezos: ${sauces.join(', ')}`);
-  if (salad.length) parts.push(`Ensalada: ${salad.join(', ')}`);
+  if (Number(product.allows_sauces)) {
+    parts.push(`Aderezos: ${sauces.length ? sauces.join(', ') : 'Sin seleccionar'}`);
+  }
+  if (Number(product.allows_salad)) {
+    parts.push(`Ensalada: ${salad.length ? salad.join(', ') : 'Sin seleccionar'}`);
+  }
   return { sauces, salad, notes: parts.join(' · ') || null };
 }
 
