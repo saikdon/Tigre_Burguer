@@ -201,24 +201,27 @@ class SaleService {
   }
 
   async createPublicReservation({ customer_name, customer_phone, payment_preference, notes, items }) {
-    const normalizedItems = new Map();
-    for (const item of items) {
-      const id = Number(item.product_id);
-      normalizedItems.set(id, (normalizedItems.get(id) || 0) + Number(item.quantity));
-    }
-
-    const productIds = [...normalizedItems.keys()];
+    const productIds = [...new Set(items.map((item) => Number(item.product_id)))];
     const products = await productRepository.findActiveByIds(productIds);
     if (products.length !== productIds.length) {
       throw Object.assign(new Error('Uno o más productos ya no están disponibles'), { status: 400 });
     }
 
     const byId = new Map(products.map((product) => [Number(product.id), product]));
-    const lineItems = productIds.map((id) => {
-      const product = byId.get(id);
-      const quantity = normalizedItems.get(id);
+    const normalizedLines = new Map();
+    for (const item of items) {
+      const productId = Number(item.product_id);
+      const product = byId.get(productId);
+      const customization = normalizeCustomization(item.customizations, product);
+      const key = `${productId}|${customization.notes || ''}`;
+      const current = normalizedLines.get(key) || { product, quantity: 0, notes: customization.notes };
+      current.quantity += Number(item.quantity);
+      normalizedLines.set(key, current);
+    }
+
+    const lineItems = [...normalizedLines.values()].map(({ product, quantity, notes: itemNotes }) => {
       const unitPrice = Number(product.price);
-      return { product_id: id, quantity, unit_price: unitPrice, subtotal: unitPrice * quantity, notes: null };
+      return { product_id: product.id, quantity, unit_price: unitPrice, subtotal: unitPrice * quantity, notes: itemNotes };
     });
     const total = lineItems.reduce((sum, item) => sum + item.subtotal, 0);
     const userId = await this._getPublicReservationUserId();
@@ -332,6 +335,34 @@ class SaleService {
     );
     return created.insertId;
   }
+}
+
+const ALLOWED_SAUCES = ['Ketchup', 'Mayonesa', 'Mostaza', 'Llajua'];
+const ALLOWED_SALAD = ['Cebolla', 'Tomate'];
+
+function normalizeCustomization(customizations = {}, product) {
+  const sauces = uniqueAllowed(customizations?.sauces, ALLOWED_SAUCES, 'Aderezo inválido');
+  const salad = uniqueAllowed(customizations?.salad, ALLOWED_SALAD, 'Ingrediente de ensalada inválido');
+
+  if (sauces.length && !Number(product.allows_sauces)) {
+    throw Object.assign(new Error(`${product.name} no admite aderezos`), { status: 400 });
+  }
+  if (salad.length && !Number(product.allows_salad)) {
+    throw Object.assign(new Error(`${product.name} no admite ensalada`), { status: 400 });
+  }
+
+  const parts = [];
+  if (sauces.length) parts.push(`Aderezos: ${sauces.join(', ')}`);
+  if (salad.length) parts.push(`Ensalada: ${salad.join(', ')}`);
+  return { sauces, salad, notes: parts.join(' · ') || null };
+}
+
+function uniqueAllowed(values, allowed, message) {
+  if (values === undefined || values === null) return [];
+  if (!Array.isArray(values)) throw Object.assign(new Error(message), { status: 400 });
+  const unique = [...new Set(values)];
+  if (unique.some((value) => !allowed.includes(value))) throw Object.assign(new Error(message), { status: 400 });
+  return unique;
 }
 
 module.exports = new SaleService();

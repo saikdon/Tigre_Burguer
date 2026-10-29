@@ -2,7 +2,7 @@ const http = require('http');
 const app = require('./app');
 const config = require('./config/env');
 const { testConnection } = require('./config/database');
-const { ensureReservationSchema } = require('./services/reservationSchemaService');
+const { ensureReservationSchema, ensureProductCustomizationSchema } = require('./services/reservationSchemaService');
 
 const server = http.createServer(app);
 
@@ -23,6 +23,7 @@ const startServer = async () => {
   }
 
   await ensureReservationSchema();
+  await ensureProductCustomizationSchema();
 
   server.listen(config.port, config.host, () => {
     console.log('═══════════════════════════════════════════');

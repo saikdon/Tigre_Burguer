@@ -48,7 +48,7 @@ class ProductRepository {
   async findActiveByIds(ids) {
     if (!ids.length) return [];
     const [rows] = await pool.query(
-      `SELECT id, name, price, status FROM productos
+      `SELECT id, name, price, status, allows_sauces, allows_salad FROM productos
        WHERE id IN (?) AND status = 'activo'`,
       [ids]
     );
@@ -57,8 +57,8 @@ class ProductRepository {
 
   async create(data) {
     const [result] = await pool.query(
-      'INSERT INTO productos (name, description, image_url, category_id, price, status) VALUES (?, ?, ?, ?, ?, ?)',
-      [data.name, data.description || null, data.image_url || null, data.category_id, data.price, data.status || 'activo']
+      'INSERT INTO productos (name, description, image_url, category_id, price, allows_sauces, allows_salad, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      [data.name, data.description || null, data.image_url || null, data.category_id, data.price, toBoolean(data.allows_sauces), toBoolean(data.allows_salad), data.status || 'activo']
     );
     return result.insertId;
   }
@@ -72,6 +72,8 @@ class ProductRepository {
     if (data.image_url !== undefined) { fields.push('image_url = ?'); values.push(data.image_url); }
     if (data.category_id !== undefined) { fields.push('category_id = ?'); values.push(data.category_id); }
     if (data.price !== undefined) { fields.push('price = ?'); values.push(data.price); }
+    if (data.allows_sauces !== undefined) { fields.push('allows_sauces = ?'); values.push(toBoolean(data.allows_sauces)); }
+    if (data.allows_salad !== undefined) { fields.push('allows_salad = ?'); values.push(toBoolean(data.allows_salad)); }
     if (data.status !== undefined) { fields.push('status = ?'); values.push(data.status); }
 
     if (fields.length === 0) return false;
@@ -103,6 +105,10 @@ class ProductRepository {
     );
     return this.findById(id);
   }
+}
+
+function toBoolean(value) {
+  return value === true || value === 1 || value === '1' || value === 'true' ? 1 : 0;
 }
 
 module.exports = new ProductRepository();

@@ -113,19 +113,18 @@ const Reservations = () => {
                     <span style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--warning)' }}>{formatCurrency(res.total)}</span>
                   </div>
 
-                  {(res.customer_phone || res.payment_preference || res.reservation_notes) && (
-                    <div className="mb-3 px-3 py-2" style={{ backgroundColor: 'rgba(255,90,0,.06)', border: '1px solid rgba(255,90,0,.12)', borderRadius: '10px', fontSize: '.82rem' }}>
-                      {res.customer_phone && <div className="d-flex align-items-center gap-2 mb-1" style={{ color: 'var(--text-secondary)' }}><i className="bi bi-telephone" style={{ color: 'var(--accent)' }}></i>{res.customer_phone}</div>}
-                      {res.payment_preference && <div className="d-flex align-items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className={`bi ${res.payment_preference === 'QR' ? 'bi-qr-code' : 'bi-cash'}`} style={{ color: 'var(--accent)' }}></i>Prefiere {res.payment_preference}{res.payment_preference === 'Efectivo' ? ' al recoger' : ' (confirmar al cobrar)'}</div>}
-                      {res.reservation_notes && <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,90,0,.12)', color: 'var(--text-muted)' }}><i className="bi bi-chat-left-text me-1"></i>{res.reservation_notes}</div>}
-                    </div>
-                  )}
+                  <div className="mb-3 px-3 py-2" style={{ backgroundColor: 'rgba(255,90,0,.06)', border: '1px solid rgba(255,90,0,.12)', borderRadius: '10px', fontSize: '.82rem' }}>
+                    <div className="d-flex align-items-center gap-2 mb-1" style={{ color: 'var(--text-secondary)' }}><i className="bi bi-person" style={{ color: 'var(--accent)' }}></i>{res.customer_name || 'Cliente sin nombre'}</div>
+                    <div className="d-flex align-items-center gap-2 mb-1" style={{ color: 'var(--text-secondary)' }}><i className="bi bi-telephone" style={{ color: 'var(--accent)' }}></i>{res.customer_phone || 'Sin celular registrado'}</div>
+                    <div className="d-flex align-items-center gap-2" style={{ color: 'var(--text-secondary)' }}><i className={`bi ${res.payment_preference === 'QR' ? 'bi-qr-code' : 'bi-cash'}`} style={{ color: 'var(--accent)' }}></i>Pago: {res.payment_preference || 'Efectivo'}{res.payment_preference === 'QR' ? ' (confirmar al cobrar)' : ' al recoger'}</div>
+                    {res.reservation_notes && <div className="mt-2 pt-2" style={{ borderTop: '1px solid rgba(255,90,0,.12)', color: 'var(--text-muted)' }}><i className="bi bi-chat-left-text me-1"></i><strong>Mensaje:</strong> {res.reservation_notes}</div>}
+                  </div>
 
                   <div style={{ backgroundColor: 'var(--bg-input)', borderRadius: '10px', overflow: 'hidden', marginBottom: '1rem' }}>
                     {res.items.map((item, idx) => (
-                      <div key={idx} className="d-flex justify-content-between align-items-center px-3 py-1.5" style={{ borderBottom: idx < res.items.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
-                        <span style={{ fontSize: '0.85rem', color: 'var(--text-primary)' }}>{item.product_name} <span style={{ color: 'var(--text-muted)' }}>x{item.quantity}</span></span>
-                        <span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{formatCurrency(item.subtotal)}</span>
+                      <div key={idx} className="px-3 py-2" style={{ borderBottom: idx < res.items.length - 1 ? '1px solid var(--border-light)' : 'none' }}>
+                        <div className="d-flex justify-content-between align-items-center gap-2"><span style={{ fontSize: '0.85rem', color: 'var(--text-primary)', fontWeight: 600 }}>{item.product_name} <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>x{item.quantity}</span></span><span style={{ fontWeight: 600, fontSize: '0.85rem', color: 'var(--text-primary)' }}>{formatCurrency(item.subtotal)}</span></div>
+                        {item.notes && <div className="mt-1 px-2 py-1" style={{ backgroundColor: 'rgba(245,166,35,.12)', borderLeft: '2px solid var(--warning)', fontSize: '.74rem', color: 'var(--text-secondary)' }}><i className="bi bi-list-check me-1" style={{ color: 'var(--warning)' }}></i>{item.notes}</div>}
                       </div>
                     ))}
                   </div>
@@ -170,7 +169,11 @@ const Reservations = () => {
                   <div style={{ color: 'var(--text-muted)' }}>Total a cobrar</div>
                 </div>
 
-                {selectedReservation.customer_name && <div className="mb-3 text-center" style={{ color: 'var(--text-muted)', fontSize: '.84rem' }}>Cliente: <strong style={{ color: 'var(--text-primary)' }}>{selectedReservation.customer_name}</strong>{selectedReservation.customer_phone ? ` · ${selectedReservation.customer_phone}` : ''}</div>}
+                <section className="mb-3 p-3" style={{ backgroundColor: 'var(--bg-input)', borderRadius: '10px', fontSize: '.84rem' }}>
+                  <div className="mb-2" style={{ color: 'var(--text-secondary)' }}><i className="bi bi-person me-2" style={{ color: 'var(--accent)' }}></i><strong style={{ color: 'var(--text-primary)' }}>{selectedReservation.customer_name || 'Cliente sin nombre'}</strong>{selectedReservation.customer_phone ? ` · ${selectedReservation.customer_phone}` : ''}</div>
+                  {selectedReservation.items.map((item, idx) => <div key={idx} className="py-1" style={{ borderTop: idx ? '1px solid var(--border-light)' : 'none', color: 'var(--text-secondary)' }}><strong style={{ color: 'var(--text-primary)' }}>{item.product_name} x{item.quantity}</strong>{item.notes && <div className="mt-1" style={{ fontSize: '.76rem', color: 'var(--text-muted)' }}><i className="bi bi-list-check me-1"></i>{item.notes}</div>}</div>)}
+                  {selectedReservation.reservation_notes && <div className="mt-2 pt-2" style={{ borderTop: '1px solid var(--border-light)', color: 'var(--text-muted)' }}><i className="bi bi-chat-left-text me-1"></i><strong>Mensaje:</strong> {selectedReservation.reservation_notes}</div>}
+                </section>
                 <SplitPayment total={Number(selectedReservation.total)} onPaymentsChange={setPayments} preferredMethod={selectedReservation.payment_preference || 'Efectivo'} />
               </div>
               <div className="modal-footer" style={{ borderTop: '1px solid var(--border-light)' }}>

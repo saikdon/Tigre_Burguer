@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from 'react';
 import publicCatalogService from '../services/publicCatalogService';
 import './PublicCatalog.css';
+import './PublicCatalogCustomizations.css';
 
 const money = (value) => `Bs. ${Number(value || 0).toFixed(2)}`;
 const backendOrigin = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
 const qrPaymentImage = '/images/tigre-burger-payment-qr.png';
+const sauceOptions = ['Ketchup', 'Mayonesa', 'Mostaza', 'Llajua'];
+const saladOptions = ['Cebolla', 'Tomate'];
 const imageUrl = (value) => {
   if (!value) return null;
   if (value.startsWith('http')) return value;
@@ -35,10 +38,17 @@ export default function PublicCatalog() {
   const units = cart.reduce((sum, item) => sum + item.quantity, 0);
 
   const addProduct = (product) => setCart((current) => {
-    const present = current.find((item) => item.id === product.id);
-    return present ? current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item) : [...current, { ...product, quantity: 1 }];
+    const customizations = { sauces: [], salad: [] };
+    const present = current.find((item) => item.id === product.id && !item.customizations.sauces.length && !item.customizations.salad.length);
+    return present ? current.map((item) => item.lineId === present.lineId ? { ...item, quantity: item.quantity + 1 } : item) : [...current, { ...product, lineId: `${product.id}-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`, quantity: 1, customizations }];
   });
-  const changeQuantity = (id, delta) => setCart((current) => current.flatMap((item) => item.id !== id ? [item] : item.quantity + delta > 0 ? [{ ...item, quantity: item.quantity + delta }] : []));
+  const changeQuantity = (lineId, delta) => setCart((current) => current.flatMap((item) => item.lineId !== lineId ? [item] : item.quantity + delta > 0 ? [{ ...item, quantity: item.quantity + delta }] : []));
+  const toggleCustomization = (lineId, type, option) => setCart((current) => current.map((item) => {
+    if (item.lineId !== lineId) return item;
+    const selected = item.customizations[type] || [];
+    const next = selected.includes(option) ? selected.filter((value) => value !== option) : [...selected, option];
+    return { ...item, customizations: { ...item.customizations, [type]: next } };
+  }));
 
   const reserve = async (event) => {
     event.preventDefault();
@@ -47,7 +57,7 @@ export default function PublicCatalog() {
     try {
       const result = await publicCatalogService.createReservation({
         ...customer,
-        items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity }))
+        items: cart.map((item) => ({ product_id: item.id, quantity: item.quantity, customizations: item.customizations }))
       });
       setSuccess(result.reservation);
       setCart([]);
@@ -74,7 +84,7 @@ export default function PublicCatalog() {
     <aside className="catalog-cart" aria-label="Tu pedido">
       <div className="cart-head"><div><span className="eyebrow">TU PEDIDO</span><h2>{units ? `${units} producto${units !== 1 ? 's' : ''}` : 'Todavía está vacío'}</h2></div><button className="close-cart" onClick={() => setShowCart(false)} aria-label="Cerrar pedido"><i className="bi bi-x-lg"></i></button></div>
       <div className="cart-lines">
-        {!cart.length ? <p className="cart-empty">Elegí algo del menú y aparecerá aquí.</p> : cart.map((item) => <div className="cart-line" key={item.id}><div><strong>{item.name}</strong><span>{money(item.price)} cada uno</span></div><div className="line-actions"><button onClick={() => changeQuantity(item.id, -1)} aria-label={`Quitar ${item.name}`}>−</button><b>{item.quantity}</b><button onClick={() => changeQuantity(item.id, 1)} aria-label={`Agregar ${item.name}`}>+</button></div></div>)}
+        {!cart.length ? <p className="cart-empty">Elegí algo del menú y aparecerá aquí.</p> : cart.map((item) => <div className="cart-line" key={item.lineId}><div className="cart-line-main"><div className="cart-line-title"><div><strong>{item.name}</strong><span>{money(item.price)} cada uno</span></div><div className="line-actions"><button onClick={() => changeQuantity(item.lineId, -1)} aria-label={`Quitar ${item.name}`}>−</button><b>{item.quantity}</b><button onClick={() => changeQuantity(item.lineId, 1)} aria-label={`Agregar ${item.name}`}>+</button></div></div>{(Number(item.allows_sauces) || Number(item.allows_salad)) && <div className="customization-box"><span className="customization-label"><i className="bi bi-sliders"></i> Personalizá este plato</span>{Number(item.allows_sauces) ? <div className="choice-group"><small>Aderezos</small><div className="choice-chips">{sauceOptions.map((option) => <button type="button" key={option} className={item.customizations.sauces.includes(option) ? 'selected' : ''} onClick={() => toggleCustomization(item.lineId, 'sauces', option)}>{option}</button>)}</div></div> : null}{Number(item.allows_salad) ? <div className="choice-group"><small>Ensalada</small><div className="choice-chips">{saladOptions.map((option) => <button type="button" key={option} className={item.customizations.salad.includes(option) ? 'selected' : ''} onClick={() => toggleCustomization(item.lineId, 'salad', option)}>{option}</button>)}</div></div> : null}</div>}</div></div>)}
       </div>
       <form onSubmit={reserve} className="reservation-form">
         <div className="cart-total"><span>Total estimado</span><strong>{money(total)}</strong></div>

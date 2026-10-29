@@ -22,6 +22,8 @@ const Products = () => {
     image_url: '',
     category_id: '',
     price: '',
+    allows_sauces: true,
+    allows_salad: false,
     status: 'activo'
   });
   const nameInputRef = useRef(null);
@@ -59,7 +61,7 @@ const Products = () => {
 
   const openCreateModal = () => {
     setEditingProduct(null);
-    setFormData({ name: '', description: '', image_url: '', category_id: '', price: '', status: 'activo' });
+    setFormData({ name: '', description: '', image_url: '', category_id: '', price: '', allows_sauces: true, allows_salad: false, status: 'activo' });
     setImageFile(null);
     setImagePreview(null);
     setShowModal(true);
@@ -73,6 +75,8 @@ const Products = () => {
       image_url: product.image_url || '',
       category_id: product.category_id,
       price: product.price,
+      allows_sauces: Boolean(Number(product.allows_sauces)),
+      allows_salad: Boolean(Number(product.allows_salad)),
       status: product.status
     });
     setImageFile(null);
@@ -458,6 +462,17 @@ const Products = () => {
                       />
                     </div>
                   </div>
+                  <section className="mt-3 p-3" style={{ backgroundColor: 'var(--bg-body)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)' }}>
+                    <div className="d-flex align-items-center gap-2 mb-2"><i className="bi bi-sliders" style={{ color: 'var(--accent)' }}></i><strong style={{ fontSize: '.9rem', color: 'var(--text-primary)' }}>Personalización del pedido</strong></div>
+                    <label className="d-flex align-items-start gap-2 mb-2" style={{ cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.allows_sauces} onChange={(e) => setFormData({ ...formData, allows_sauces: e.target.checked })} style={{ marginTop: '3px' }} />
+                      <span><span style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Permite aderezos</span><small style={{ color: 'var(--text-muted)' }}>Ketchup, mayonesa, mostaza y llajua.</small></span>
+                    </label>
+                    <label className="d-flex align-items-start gap-2" style={{ cursor: 'pointer' }}>
+                      <input type="checkbox" checked={formData.allows_salad} onChange={(e) => setFormData({ ...formData, allows_salad: e.target.checked })} style={{ marginTop: '3px' }} />
+                      <span><span style={{ display: 'block', fontSize: '.85rem', fontWeight: 600, color: 'var(--text-primary)' }}>Permite ensalada</span><small style={{ color: 'var(--text-muted)' }}>El cliente puede elegir cebolla y tomate; úsalo para hamburguesas.</small></span>
+                    </label>
+                  </section>
                   {editingProduct && (
                     <div className="mt-3">
                       <label className="form-label" style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-secondary)' }}>

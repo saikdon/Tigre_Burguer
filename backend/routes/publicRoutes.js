@@ -15,6 +15,11 @@ router.post('/reservations', [
   body('items').isArray({ min: 1, max: 30 }).withMessage('Agrega al menos un producto'),
   body('items.*.product_id').isInt({ min: 1 }).withMessage('Producto inválido'),
   body('items.*.quantity').isInt({ min: 1, max: 20 }).withMessage('Cantidad inválida'),
+  body('items.*.customizations').optional().isObject().withMessage('Personalización inválida'),
+  body('items.*.customizations.sauces').optional().isArray({ max: 4 }).withMessage('Aderezos inválidos'),
+  body('items.*.customizations.sauces.*').optional().isIn(['Ketchup', 'Mayonesa', 'Mostaza', 'Llajua']).withMessage('Aderezo inválido'),
+  body('items.*.customizations.salad').optional().isArray({ max: 2 }).withMessage('Ensalada inválida'),
+  body('items.*.customizations.salad.*').optional().isIn(['Cebolla', 'Tomate']).withMessage('Ingrediente de ensalada inválido'),
   validate
 ], publicController.createReservation);
 
